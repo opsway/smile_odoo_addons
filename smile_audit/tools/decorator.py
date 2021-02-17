@@ -29,7 +29,8 @@ def audit_decorator(method):
             else result
         rule = self._get_audit_rule('create')
         if rule:
-            new_values = record.read(load='_classic_write')
+            # read needs sudo, related fields may be restricted for the editor
+            new_values = record.sudo().read(load='_classic_write')
             rule.log('create', new_values=new_values)
         return result
 
@@ -40,20 +41,23 @@ def audit_decorator(method):
                  self.ids != self._context.get('audit_rec_ids'))):
             rule = self._get_audit_rule('write')
         if rule:
-            old_values = self.read(load='_classic_write')
+            # read needs sudo, related fields may be restricted to the editor
+            old_values = self.sudo().read(load='_classic_write')
         result = audit_write.origin(self, vals)
         if rule:
             if audit_write.origin.__name__ == '_write':
                 new_values = get_new_values(self)
             else:
-                new_values = self.read(load='_classic_write')
+                # read needs sudo, related fields may be restricted to the editor
+                new_values = self.sudo().read(load='_classic_write')
             rule.log('write', old_values, new_values)
         return result
 
     def audit_unlink(self):
         rule = self._get_audit_rule('unlink')
         if rule:
-            old_values = self.read(load='_classic_write')
+            # read needs sudo, related fields may be restricted to the editor
+            old_values = self.sudo().read(load='_classic_write')
             rule.log('unlink', old_values)
         return audit_unlink.origin(self)
 
